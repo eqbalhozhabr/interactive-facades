@@ -19,3 +19,10 @@ export function findFfmpeg() {
   }
   throw new Error('ffmpeg not found. Install it (winget install Gyan.FFmpeg) or set the FFMPEG env var.');
 }
+
+// ffprobe lives next to ffmpeg (same folder, same naming), or on PATH.
+export function findFfprobe() {
+  const ff = findFfmpeg();
+  if (ff === 'ffmpeg') return 'ffprobe';
+  return ff.replace(/ffmpeg(\.exe)?$/i, (m) => m.replace('ffmpeg', 'ffprobe'));
+}
