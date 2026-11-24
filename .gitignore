@@ -1,0 +1,7 @@
+node_modules/
+.DS_Store
+Thumbs.db
+
+# Raw sprite sheets and other heavy intermediates: the shipped output is the mp4 in assets/transitions/.
+projects/*/assets/sprites/
+projects/*/source/

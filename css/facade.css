@@ -1,0 +1,166 @@
+:root {
+  --teal: #115363;
+  --gold: #ccb291;
+  --gold-dark: #b59b7b;
+  --cream: #f7f7f4;
+  --ink: #333;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #fff;
+  color: var(--ink);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+}
+
+[hidden] { display: none !important; }
+
+.app { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+
+/* The facade fills the page (or the iframe it is embedded in). */
+.app.facade { position: fixed; inset: 0; z-index: 1; background: #fff; overflow: auto; }
+.app.enter { animation: fade-in .7s ease both; }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+
+/* ---------- facade stage ---------- */
+.facade { position: relative; width: 100%; display: flex; justify-content: center; }
+
+.stage {
+  position: relative;
+  overflow: hidden;
+  /* Fit the whole building in the viewport while keeping the render's aspect ratio. */
+  width: min(100%, 1400px, calc(100vh * var(--ratio)));
+  aspect-ratio: var(--ratio);
+}
+
+.stage { cursor: grab; user-select: none; -webkit-user-select: none; touch-action: pan-y; }
+.stage.dragging { cursor: grabbing; }
+.stage.dragging .unit { pointer-events: none; }
+
+.bg, .units, .transition { position: absolute; inset: 0; width: 100%; height: 100%; }
+.bg { object-fit: cover; z-index: 1; }
+.bg:not([src]) { visibility: hidden; }
+.units { z-index: 10; }
+.transition { z-index: 15; pointer-events: none; object-fit: cover; }
+.transition[hidden] { display: none; }
+
+.unit {
+  fill: rgba(255, 255, 255, 0);
+  stroke: rgba(255, 255, 255, 0);
+  stroke-width: 2;
+  cursor: pointer;
+  transition: fill .3s ease-in-out;
+  outline: none;
+}
+.unit.nodata { cursor: default; pointer-events: none; }
+.unit.avail:hover, .unit.avail:focus-visible, .unit.avail.active { fill: rgba(112, 191, 68, .5); }
+.unit.sold:hover, .unit.sold:focus-visible, .unit.sold.active { fill: rgba(255, 0, 0, .4); }
+.unit:focus-visible { stroke: #fff; }
+
+/* ---------- navigation ---------- */
+.hint {
+  position: absolute; bottom: 92px; left: 50%; transform: translateX(-50%); z-index: 20; pointer-events: none;
+  padding: 7px 16px; border-radius: 30px; background: rgba(17, 83, 99, .85); color: #fff;
+  font-size: .8rem; font-weight: 600; letter-spacing: .02em;
+  animation: hint-out .6s ease 6s forwards;
+}
+.hint.gone { animation: hint-out .3s ease forwards; }
+@keyframes hint-out { to { opacity: 0; visibility: hidden; } }
+
+.back {
+  position: absolute; top: 16px; left: 16px; z-index: 20;
+  padding: 8px 14px; border-radius: 30px;
+  background: rgba(247, 247, 244, .9); box-shadow: 0 5px 15px rgba(0, 0, 0, .15);
+  color: var(--teal); font-size: .85rem; font-weight: bold; text-decoration: none;
+}
+.back:hover { color: var(--gold-dark); }
+
+.view-nav {
+  position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 20;
+  display: flex; align-items: center; gap: 20px;
+  padding: 10px 25px; border-radius: 40px;
+  background: rgba(247, 247, 244, .9); box-shadow: 0 5px 15px rgba(0, 0, 0, .15);
+}
+.nav-arrow { background: none; border: none; font-size: 24px; color: var(--teal); cursor: pointer; transition: color .3s; padding: 0 10px; }
+.nav-arrow:hover { color: var(--gold); }
+.view-label { font-size: 1rem; font-weight: bold; min-width: 80px; text-align: center; }
+
+/* ---------- tooltip / details sheet ---------- */
+.tooltip {
+  position: fixed; top: 0; left: 0; z-index: 9999;
+  width: 230px; max-width: 85vw; padding: 12px 15px;
+  border-radius: 12px; background: var(--cream); box-shadow: 0 10px 25px rgba(0, 0, 0, .2);
+  direction: ltr; pointer-events: none;
+  opacity: 0; visibility: hidden; transition: opacity .2s ease;
+}
+.tooltip.visible { opacity: 1; visibility: visible; }
+
+.close-icon {
+  position: absolute; top: 6px; left: 10px; background: none; border: none;
+  font-size: 22px; font-weight: bold; color: var(--teal); cursor: pointer; display: none;
+}
+
+/* Fixed height so the tooltip does not grow after the image loads (it is positioned before that). */
+.plan-img { display: block; width: 100%; height: 150px; object-fit: contain; margin: 12px 0; border-radius: 4px; }
+.plan-img[hidden] { display: none; }
+
+.data-tags { display: flex; justify-content: space-between; gap: 5px; margin-bottom: 15px; }
+.tag { flex: 1; padding: 5px 8px; border-radius: 4px; font-size: .85rem; color: #fff; text-align: center; }
+.type-tag { background: #0b5360; }
+.unit-tag { background: #5c1836; }
+.status-tag { background: #e60000; text-transform: uppercase; }
+.status-tag.available { background: #009933; }
+
+.details-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-top: 10px; border-top: 1px solid #ddd; font-size: .9rem; }
+.detail-item { display: flex; align-items: center; gap: 6px; color: var(--teal); }
+
+.main-btn {
+  display: block; width: 100%; padding: 10px; border: none; border-radius: 8px;
+  background: #d1d1d1; color: #fff; font: inherit; font-weight: bold; text-transform: uppercase; text-align: center;
+}
+.main-btn.available { background: var(--gold); color: #1a1a1a; cursor: pointer; }
+.main-btn.available:hover { background: var(--gold-dark); }
+
+/* Showcase mode (features.tours = false): nothing to click through to, so no button and no pointer cursor. */
+.facade.no-tours .main-btn { display: none; }
+.facade.no-tours .details-row { margin-bottom: 0; }
+.facade.no-tours.touch .details-row { margin-bottom: 4px; }
+.facade.no-tours .unit { cursor: default; }
+
+/* Touch devices: details open as a sheet at the top of the screen. */
+.facade.touch .tooltip {
+  top: 0 !important; left: 0 !important; right: 0 !important;
+  width: 100%; max-width: 100%; padding: 14px 16px 12px;
+  border-radius: 0 0 20px 20px;
+  transform: translateY(-100%) !important;
+  pointer-events: none;
+  background: rgba(247, 247, 244, .98); backdrop-filter: blur(10px);
+  transition: transform .25s ease, opacity .2s ease;
+}
+.facade.touch .tooltip.visible { transform: none !important; pointer-events: auto; }
+.facade.touch .close-icon { display: block; }
+.facade.touch .plan-img { height: 130px; margin: 8px 0; }
+.facade.touch .data-tags { margin-bottom: 10px; }
+.facade.touch .tag { font-size: .75rem; padding: 4px; }
+.facade.touch .details-row { font-size: .8rem; margin-bottom: 10px; padding-top: 8px; }
+.facade.touch .main-btn { font-size: .85rem; padding: 8px; }
+
+@media (max-width: 768px), (max-height: 600px) {
+  .view-nav { bottom: 15px; padding: 8px 15px; gap: 12px; }
+  .back { top: 10px; left: 10px; padding: 6px 12px; }
+  .tooltip { width: 200px; padding: 10px; }
+}
+
+/* Narrow portrait screens: the render is small, so keep the view controls below it instead of on top. */
+@media (max-width: 768px) and (orientation: portrait) {
+  .stage { overflow: visible; }
+  .view-nav { bottom: auto; top: calc(100% + 14px); }
+  .hint { bottom: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .unit, .tooltip, .facade.touch .tooltip { transition: none; }
+}

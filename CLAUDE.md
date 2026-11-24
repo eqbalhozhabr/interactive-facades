@@ -1,0 +1,63 @@
+# Interactive Facades
+
+ریپوی ساخت «نمای اینتراکتیو ساختمان» برای پروژه‌های املاک. هسته (engine) یک بار نوشته شده و برای همه پروژه‌ها مشترک است؛
+هر پروژه جدید فقط **داده و assets** است، نه کد. پروژه مرجع: `armas` (۴ نما، ۶۴ واحد، دسکتاپ و موبایل تست‌شده).
+
+قبل از هر کار این‌ها را بخوان:
+- `FACADE-SESSION-NOTES.md` (فارسی): رفتار نهایی، فرمت فایل‌ها، چرخه ساخت پروژه، تصمیم‌های فنی و مشکلات قبلی. مرجع اصلی است.
+- `README.md`: خلاصه انگلیسی و دستورها.
+
+## قواعد اصلی
+
+1. **کد هسته را برای یک پروژه تغییر نده.** `js/facade.js`, `js/main.js`, `css/facade.css` و `tools/` مشترک‌اند.
+   هر چیز مخصوص یک پروژه فقط در `projects/projects.json` و `projects/<id>/` می‌رود.
+   اگر نیاز واقعی به تغییر هسته بود (باگ یا قابلیت عمومی)، جدا و با commit مستقل انجام بده و حتماً `armas` را دوباره تست کن.
+2. **بدون build و بدون وابستگی** باقی بماند: ES module ساده، بدون npm package در runtime. ابزارهای `tools/` فقط Node (۱۸+) و ffmpeg می‌خواهند.
+3. **رنگ و برند** فقط با تغییر متغیرهای `:root` در css (در صورت نیاز override در سطح پروژه، نه fork کردن css).
+4. **نسبت تصویر ثابت:** `viewBox` در config باید با ابعاد `view-N.webp` و SVG واحدها یکی باشد.
+5. **ویدیوها:** فقط جهت جلو (`trans-N-to-N+1` و `trans-N-to-1`)، همه با تعداد فریم برابر، فریم اول/آخر منطبق با `view-N`/`view-N+1`.
+   encode با `-g 4 -bf 0 -crf 28 -pix_fmt yuv420p -movflags +faststart -an` (دلیلش در notes بخش ۴ و ۵).
+6. **پلان‌ها** webp با ضلع بلند ۷۲۰px. نماها ~۳۰۰ تا ۷۰۰ KB.
+7. داده واحدها از Google Sheet با `tools/sync-sheets.mjs` به `data.json` استاتیک تبدیل می‌شود؛ سایت هیچ‌وقت مستقیم به Google وصل نمی‌شود.
+8. `features.tours=false` یعنی حالت نمونه‌کار (بدون دکمه و لینک تور). برای پروژه‌ای که تور واقعی ندارد استفاده شود، نه placeholder.
+
+## ساخت پروژه جدید (چک‌لیست)
+
+ورودی‌هایی که از کاربر لازم است: نام و `id` پروژه، تعداد نماها، رندر هر نما، ترنزیشن‌ها (sprite / دنباله فریم / ویدیو)،
+SVG شکل واحدها، لینک CSV شیت، تصاویر پلان تیپ‌ها، لینک تورها و رنگ برند (اختیاری).
+
+1. `projects/<id>/assets/` را بساز: `view-1..N.webp`، `transitions/trans-*.mp4`، پلان‌ها.
+2. ترنزیشن‌ها: `node tools/sprites-to-video.mjs <id>` (از sprite) یا ffmpeg مستقیم؛ سپس تعداد فریم و fps واقعی را با `ffprobe` چک و در config بگذار.
+3. واحدها: `node tools/extract-units.mjs <id> <legacy.html>` → `units.json`.
+4. داده: لینک شیت را در config بگذار و `node tools/sync-sheets.mjs <id>`.
+5. ورودی را به `projects/projects.json` اضافه کن.
+6. تست (پایین) و گزارش مشکلات.
+
+## تست
+
+```bash
+node tools/serve.mjs 5173        # http://localhost:5173/index.html#/<id>
+```
+
+- در این محیط cloud، Chromium و Playwright از قبل نصب‌اند (`require('playwright')`) و `ffmpeg` و Node موجودند.
+- حداقل تست: دسکتاپ (۱۴۴۰×۹۰۰) و موبایل (`hasTouch`, `isMobile`، ۳۹۰×۸۴۴)؛ بدون خطای console؛ تعداد `.unit` درست؛ تعویض نما با دکمه؛ tooltip با hover (دسکتاپ) و کارت با tap (موبایل).
+- بعد از تعویض نما قبل از اسکرین‌شات حدود ۱ تا ۱.۵ ثانیه صبر کن تا تصویر ثابت جایگزین شود.
+- هر واحد در `units.json` باید ردیفی در `data.json` داشته باشد (وگرنه `nodata` و غیرفعال می‌شود) و بالعکس؛ این را با اسکریپت چک و گزارش کن.
+- تست واقعی روی گوشی/Safari/iOS و iframe در سایت دیگر هنوز انجام نشده؛ در گزارش صریح بگو چه چیزی تست نشده.
+
+## ساختار ریپو
+
+```
+index.html, css/, js/       هسته viewer (مشترک)
+tools/                      serve, extract-units, sync-sheets, sprites-to-video
+projects/projects.json      فهرست پروژه‌ها + features
+projects/<id>/              units.json, data.json, assets/
+FACADE-SESSION-NOTES.md     مرجع کامل (فارسی)
+```
+
+## نکات اجرایی
+
+- فایل‌های آپلودشده ممکن است پسوند اشتباه داشته باشند (کیت اولیه با پسوند `.zip` در واقع tar بود). با `file` نوع را چک کن و در یک پوشه خالی جدا extract کن.
+- `assets/sprites/` (sprite sheet خام) و پوشه‌های `source/` در git نیستند (`.gitignore`)؛ خروجی نهایی mp4 است.
+- فایل‌های متنی را با LF نگه دار.
+- PR نساز مگر کاربر صریحاً بخواهد. روی branch جلسه commit و push کن.

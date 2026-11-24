@@ -1,0 +1,29 @@
+{
+  "features": {
+    "tours": true
+  },
+  "projects": [
+    {
+      "id": "armas",
+      "name": "Zenith Armas",
+      "facade": {
+        "dir": "projects/armas",
+        "views": 4,
+        "viewBox": [
+          1920,
+          1080
+        ],
+        "sheet": "https://docs.google.com/spreadsheets/d/e/2PACX-1vS16QSaS2LRSOV8gQKa8CUtyUhLCgAKye9L0bOHgKqGo91W1BqR_No8uoN6yJ7mX2IvZ6QXb3QUdedf/pub?output=csv",
+        "transition": {
+          "frames": 34,
+          "fps": 30,
+          "sprite": {
+            "frameWidth": 1280,
+            "frameHeight": 720,
+            "columns": 5
+          }
+        }
+      }
+    }
+  ]
+}
