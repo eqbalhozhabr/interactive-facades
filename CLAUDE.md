@@ -26,10 +26,13 @@
 ورودی‌هایی که از کاربر لازم است: نام و `id` پروژه، تعداد نماها، رندر هر نما، ترنزیشن‌ها (sprite / دنباله فریم / ویدیو)،
 SVG شکل واحدها، لینک CSV شیت، تصاویر پلان تیپ‌ها، لینک تورها و رنگ برند (اختیاری).
 
-1. `projects/<id>/assets/` را بساز: `view-1..N.webp`، `transitions/trans-*.mp4`، پلان‌ها.
-2. ترنزیشن‌ها: `node tools/sprites-to-video.mjs <id>` (از sprite) یا ffmpeg مستقیم؛ سپس تعداد فریم و fps واقعی را با `ffprobe` چک و در config بگذار.
-3. واحدها: `node tools/extract-units.mjs <id> <legacy.html>` → `units.json`.
-4. داده: لینک شیت را در config بگذار و `node tools/sync-sheets.mjs <id>`.
+0. **ورودی‌ها را بررسی کن قبل از ساخت:** ویوها باید رندر تمیز باشند (اسکرین‌شات از viewer سایت‌ها لوگو و دکمه دارد و قابل استفاده نیست)، همه دقیقاً هم‌اندازه، و ترنزیشن‌ها هم‌اندازه با ویوها.
+1. ویوها: `node tools/prepare-views.mjs <id> --src <پوشه> --quality 95` → `assets/view-N.webp` (و `viewBox` را چاپ می‌کند).
+2. ترنزیشن‌ها:
+   - ویدیو بلند (مثلاً ۵ ثانیه): `node tools/retime-videos.mjs <id> --src <پوشه> --frames 41 --fps 34` → ۴۱ فریم، ~۱٫۲ ثانیه، با حفظ فریم اول و آخر، و چک خودکار تطابق دو سر با ویوها (PSNR). **ویوها باید قبل از این در assets باشند.** مقدار `frames` و `fps` چاپ‌شده را در config بگذار.
+   - sprite sheet: `node tools/sprites-to-video.mjs <id>`.
+3. واحدها: `node tools/extract-units.mjs <id> <پوشه SVG | legacy.html>` → `units.json`. SVG: یک فایل به ازای هر ویو (`view-N.svg`)، همه با یک `viewBox` برابر ابعاد ویو، هر شکل با `id` (مثل `cca-2-204`) و بدون `transform`.
+4. داده: پیش‌نویس شیت را به‌شکل CSV بساز (`projects/<id>/units-draft.csv`، ستون‌های موتور + ستون‌های کمکی مثل `sourceCode`)، در Google Sheet بگذار، لینک را در config بگذار و `node tools/sync-sheets.mjs <id>`. تا شیت نیست، `units.json` و `data.json` خالی (`{"viewBox":[w,h],"views":{"1":[],…}}` و `{}`) موتور را بالا می‌آورد و می‌شود ویو و ترنزیشن را تست کرد.
 5. ورودی را به `projects/projects.json` اضافه کن.
 6. تست (پایین) و گزارش مشکلات.
 
@@ -49,7 +52,7 @@ node tools/serve.mjs 5173        # http://localhost:5173/index.html#/<id>
 
 ```
 index.html, css/, js/       هسته viewer (مشترک)
-tools/                      serve, extract-units, sync-sheets, sprites-to-video
+tools/                      serve, extract-units, sync-sheets, sprites-to-video, retime-videos, prepare-views
 projects/projects.json      فهرست پروژه‌ها + features
 projects/<id>/              units.json, data.json, assets/
 FACADE-SESSION-NOTES.md     مرجع کامل (فارسی)
@@ -60,4 +63,7 @@ FACADE-SESSION-NOTES.md     مرجع کامل (فارسی)
 - فایل‌های آپلودشده ممکن است پسوند اشتباه داشته باشند (کیت اولیه با پسوند `.zip` در واقع tar بود). با `file` نوع را چک کن و در یک پوشه خالی جدا extract کن.
 - `assets/sprites/` (sprite sheet خام) و پوشه‌های `source/` در git نیستند (`.gitignore`)؛ خروجی نهایی mp4 است.
 - فایل‌های متنی را با LF نگه دار.
+- `features` در `projects.json` سراسری است (همه پروژه‌ها). اگر یک پروژه حالت متفاوتی می‌خواهد (مثلاً `tours: false` فقط برای او)، اول `main.js` باید override در سطح پروژه را پشتیبانی کند (تغییر هسته، commit جدا).
+- پروژه‌هایی که در ریپو هستند: `armas` (مرجع کامل)، `couture` (Couture by Cavalli؛ ویو و ترنزیشن آماده، منتظر SVG و داده‌ی واحدها).
+- مرز جدی طراحی: روی موبایل پرتره قاب ۱۶:۹ کوچک است و برای ساختمان بلند (مثل couture) ضعیف‌تر دیده می‌شود (notes بخش ۸).
 - PR نساز مگر کاربر صریحاً بخواهد. روی branch جلسه commit و push کن.

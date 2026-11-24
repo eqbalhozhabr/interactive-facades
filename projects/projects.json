@@ -24,6 +24,22 @@
           }
         }
       }
+    },
+    {
+      "id": "couture",
+      "name": "Couture by Cavalli",
+      "facade": {
+        "dir": "projects/couture",
+        "views": 4,
+        "viewBox": [
+          1920,
+          1080
+        ],
+        "transition": {
+          "frames": 41,
+          "fps": 34
+        }
+      }
     }
   ]
 }
